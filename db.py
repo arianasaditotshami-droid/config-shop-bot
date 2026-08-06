@@ -312,3 +312,59 @@ def set_referrer(user_id, referrer_id):
 
     db.commit()
     db.close()
+def add_points(user_id, amount):
+    db = connect()
+    cur = db.cursor()
+
+    cur.execute(
+        "UPDATE users SET points = points + ? WHERE user_id=?",
+        (amount, user_id)
+    )
+
+    db.commit()
+    db.close()
+
+
+
+def remove_points(user_id, amount):
+    db = connect()
+    cur = db.cursor()
+
+    cur.execute(
+        "UPDATE users SET points = points - ? WHERE user_id=? AND points >= ?",
+        (amount, user_id, amount)
+    )
+
+    db.commit()
+    db.close()
+
+
+
+def get_gift(code):
+    db = connect()
+    cur = db.cursor()
+
+    cur.execute(
+        "SELECT points FROM gifts WHERE code=? AND used=0",
+        (code,)
+    )
+
+    result = cur.fetchone()
+
+    db.close()
+
+    return result
+
+
+
+def use_gift(code):
+    db = connect()
+    cur = db.cursor()
+
+    cur.execute(
+        "UPDATE gifts SET used=1 WHERE code=?",
+        (code,)
+    )
+
+    db.commit()
+    db.close()
