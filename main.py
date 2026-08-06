@@ -17,10 +17,11 @@ async def start(message: Message):
     user_id = message.from_user.id
 
     await message.answer(
-        f"سلام 👋\n"
-        f"آیدی عددی شما:\n{user_id}\n\n"
-        f"برای خرید از این شماره کارت پرداخت کنید:\n"
-        f"{CARD_NUMBER}"
+    f"سلام 👋\n"
+    f"آیدی عددی شما:\n{user_id}\n\n"
+    f"شماره کارت پرداخت:\n"
+    f"{CARD_NUMBER}",
+    reply_markup=menu
     )
 
 
