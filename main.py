@@ -221,25 +221,31 @@ async def user_buttons(message: Message):
 
 
         if points >= need:
+if points >= need:
 
-            remove_points(user_id, need)
+    remove_points(user_id, need)
 
+    config_text = (
+        "🔑 کانفیگ شما آماده است.\n\n"
+        f"📦 پکیج: {message.text}\n\n"
+        "⚙️ کانفیگ بعد از تایید سیستم ارسال می‌شود."
+    )
 
-            await message.answer(
-                "✅ خرید با امتیاز انجام شد.\n\n"
-                f"📦 {message.text}\n"
-                f"⭐ {need} امتیاز کم شد.",
-                reply_markup=back_menu
-            )
+    await message.answer(
+        "✅ خرید با امتیاز موفق بود.\n\n"
+        f"📦 {message.text}\n"
+        f"⭐ {need} امتیاز کم شد.\n\n"
+        f"{config_text}",
+        reply_markup=back_menu
+    )
 
-        else:
-
-            await message.answer(
-                f"❌ امتیاز کافی نیست.\n"
-                f"امتیاز لازم: {need}\n"
-                f"امتیاز شما: {points}",
-                reply_markup=back_menu
-            )
+else:
+    await message.answer(
+        f"❌ امتیاز کافی نیست.\n"
+        f"امتیاز لازم: {need}\n"
+        f"امتیاز شما: {points}",
+        reply_markup=back_menu
+                        )
 
 
 
