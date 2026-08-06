@@ -11,10 +11,8 @@ from db import (
     get_configs
 )
 
+from admin import router as admin_router
 
-# =====================
-# تنظیمات ربات
-# =====================
 
 BOT_TOKEN = "8952198918:AAGuTIHUt49LzI97goCQf7Mesa0bBdOCWQM"
 
@@ -23,8 +21,11 @@ ADMIN_ID = 8635403087
 CARD_NUMBER = "6104337300101910"
 
 
+
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+dp.include_router(admin_router)
 
 
 
