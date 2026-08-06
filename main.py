@@ -11,9 +11,11 @@ from aiogram.types import (
 )
 from aiogram.filters import Command
 
+from db import get_points, get_referrals
+
 
 # =====================
-# تنظیمات ربات
+# تنظیمات
 # =====================
 
 BOT_TOKEN = "8952198918:AAGuTIHUt49LzI97goCQf7Mesa0bBdOCWQM"
@@ -30,24 +32,25 @@ dp = Dispatcher()
 
 
 # =====================
-# منوی اصلی کاربر
+# منوی اصلی
 # =====================
 
 user_menu = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="🛒 خرید کانفینگ"),
-            KeyboardButton(text="🎁 وارد کردن کد هدیه")
+            KeyboardButton(text="⭐ خرید با امتیاز")
         ],
         [
             KeyboardButton(text="📦 کانفینگ های خریداری شده من"),
             KeyboardButton(text="💳 شارژ حساب")
         ],
         [
-            KeyboardButton(text="⭐ امتیاز های من"),
-            KeyboardButton(text="👥 زیر مجموعه گیری")
+            KeyboardButton(text="🎁 وارد کردن کد هدیه"),
+            KeyboardButton(text="⭐ امتیاز های من")
         ],
         [
+            KeyboardButton(text="👥 زیر مجموعه گیری"),
             KeyboardButton(text="🛠 پشتیبانی")
         ]
     ],
@@ -72,7 +75,7 @@ back_menu = ReplyKeyboardMarkup(
 
 
 # =====================
-# پکیج ها
+# قیمت ها
 # =====================
 
 packages = {
@@ -97,16 +100,12 @@ packages = {
 
 package_menu = ReplyKeyboardMarkup(
     keyboard=[
-        [
-            KeyboardButton(text=name)
-        ]
-        for name in packages
+        [KeyboardButton(text=x)]
+        for x in packages
     ]
     +
     [
-        [
-            KeyboardButton(text="⬅️ برگشت")
-        ]
+        [KeyboardButton(text="⬅️ برگشت")]
     ],
     resize_keyboard=True
 )
@@ -114,7 +113,7 @@ package_menu = ReplyKeyboardMarkup(
 
 
 # =====================
-# دکمه های رسید
+# تایید رسید
 # =====================
 
 receipt_buttons = InlineKeyboardMarkup(
@@ -132,7 +131,7 @@ receipt_buttons = InlineKeyboardMarkup(
     ]
 )
 # =====================
-# شروع ربات
+# شروع
 # =====================
 
 @dp.message(Command("start"))
@@ -161,7 +160,7 @@ async def back(message: Message):
 
 
 # =====================
-# دکمه های کاربر
+# پنل کاربر
 # =====================
 
 @dp.message()
@@ -170,8 +169,6 @@ async def user_buttons(message: Message):
     user_id = message.from_user.id
 
 
-
-    # خرید کانفینگ
 
     if message.text == "🛒 خرید کانفینگ":
 
@@ -183,15 +180,12 @@ async def user_buttons(message: Message):
 
 
 
-    # انتخاب پکیج
-
     elif message.text in packages:
 
         price = packages[message.text]
 
-
         await message.answer(
-            "✅ پکیج انتخابی:\n\n"
+            f"✅ پکیج انتخابی:\n\n"
             f"{message.text}\n"
             f"💰 قیمت: {price}\n\n"
             f"💳 شماره کارت:\n{CARD_NUMBER}\n\n"
@@ -201,53 +195,18 @@ async def user_buttons(message: Message):
 
 
 
-    # کد هدیه
-
-    elif message.text == "🎁 وارد کردن کد هدیه":
-
-        await message.answer(
-            "🎁 کد هدیه خود را ارسال کنید.",
-            reply_markup=back_menu
-        )
-
-
-
-    # کانفینگ های خریداری شده
-
-    elif message.text == "📦 کانفینگ های خریداری شده من":
-
-        await message.answer(
-            "📦 هنوز کانفینگی خریداری نکرده‌اید.",
-            reply_markup=back_menu
-        )
-
-
-
-    # شارژ حساب
-
-    elif message.text == "💳 شارژ حساب":
-
-        await message.answer(
-            "💳 شارژ حساب\n\n"
-            f"💳 شماره کارت:\n{CARD_NUMBER}\n\n"
-            "رسید پرداخت را ارسال کنید.",
-            reply_markup=back_menu
-        )
-
-
-
-    # امتیاز
-
     elif message.text == "⭐ امتیاز های من":
 
+        points = get_points(user_id)
+        referrals = get_referrals(user_id)
+
         await message.answer(
-            "⭐ امتیاز شما: 0",
+            f"⭐ امتیاز شما: {points}\n\n"
+            f"👥 تعداد زیرمجموعه‌ها: {referrals}",
             reply_markup=back_menu
         )
 
 
-
-    # زیرمجموعه
 
     elif message.text == "👥 زیر مجموعه گیری":
 
@@ -255,24 +214,63 @@ async def user_buttons(message: Message):
 
         link = f"https://t.me/{me.username}?start={user_id}"
 
+        referrals = get_referrals(user_id)
 
         await message.answer(
-            "👥 لینک زیرمجموعه شما:\n\n"
-            f"{link}",
+            f"👥 لینک زیرمجموعه شما:\n\n"
+            f"{link}\n\n"
+            f"👤 تعداد دعوت‌ها: {referrals}\n"
+            f"🎁 پاداش هر نفر: 5 امتیاز",
             reply_markup=back_menu
         )
 
 
 
-    # پشتیبانی
+    elif message.text == "⭐ خرید با امتیاز":
+
+        await message.answer(
+            "⭐ خرید با امتیاز به زودی فعال می‌شود.",
+            reply_markup=back_menu
+        )
+
+
+
+    elif message.text == "🎁 وارد کردن کد هدیه":
+
+        await message.answer(
+            "🎁 کد هدیه را ارسال کنید.",
+            reply_markup=back_menu
+        )
+
+
+
+    elif message.text == "📦 کانفینگ های خریداری شده من":
+
+        await message.answer(
+            "📦 هنوز کانفینگی ثبت نشده است.",
+            reply_markup=back_menu
+        )
+
+
+
+    elif message.text == "💳 شارژ حساب":
+
+        await message.answer(
+            f"💳 شماره کارت:\n{CARD_NUMBER}\n\n"
+            "رسید پرداخت را ارسال کنید.",
+            reply_markup=back_menu
+        )
+
+
 
     elif message.text == "🛠 پشتیبانی":
 
         await message.answer(
             "🛠 پیام خود را ارسال کنید.",
             reply_markup=back_menu
-)
-            # دریافت رسید پرداخت
+        )
+
+
 
     elif message.photo:
 
@@ -288,12 +286,8 @@ async def user_buttons(message: Message):
 
 
         await message.answer(
-            "✅ رسید شما ارسال شد.\n"
-            "منتظر تایید پشتیبانی باشید."
-        )
-
-
-
+            "✅ رسید شما ارسال شد."
+)
 # =====================
 # تایید رسید
 # =====================
@@ -305,13 +299,11 @@ async def accept_receipt(call: CallbackQuery):
         call.message.caption.split(":")[-1].strip()
     )
 
-
     await bot.send_message(
         user_id,
         "✅ پرداخت شما توسط پشتیبانی تایید شد.\n\n"
         "لطفاً منتظر ارسال کانفینگ باشید."
     )
-
 
     await call.answer("رسید تایید شد")
 
@@ -328,12 +320,10 @@ async def reject_receipt(call: CallbackQuery):
         call.message.caption.split(":")[-1].strip()
     )
 
-
     await bot.send_message(
         user_id,
         "❌ رسید شما توسط پشتیبانی رد شد."
     )
-
 
     await call.answer("رسید رد شد")
 
@@ -352,4 +342,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main())        
