@@ -11,7 +11,15 @@ from aiogram.types import (
 )
 from aiogram.filters import Command
 
-from db import get_points, get_referrals, set_referrer
+from db import (
+    get_points,
+    get_referrals,
+    set_referrer,
+    add_points,
+    remove_points,
+    get_gift,
+    use_gift
+)
 
 
 # =====================
@@ -23,6 +31,7 @@ BOT_TOKEN = "8952198918:AAGuTIHUt49LzI97goCQf7Mesa0bBdOCWQM"
 ADMIN_ID = 8635403087
 
 CARD_NUMBER = "6104337300101910"
+"
 
 
 bot = Bot(token=BOT_TOKEN)
@@ -32,7 +41,7 @@ dp = Dispatcher()
 
 
 # =====================
-# منوی اصلی کاربر
+# منوی اصلی
 # =====================
 
 user_menu = ReplyKeyboardMarkup(
@@ -58,10 +67,6 @@ user_menu = ReplyKeyboardMarkup(
 )
 
 
-
-# =====================
-# منوی برگشت
-# =====================
 
 back_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -91,6 +96,19 @@ packages = {
 }
 
 
+points_packages = {
+
+    "⭐ 10 گیگ + 1 ماه": 10,
+    "⭐ 15 گیگ + 1 ماه": 15,
+    "⭐ 20 گیگ + 1 ماه": 20,
+    "⭐ 30 گیگ + 1 ماه": 30,
+    "⭐ 40 گیگ + 2 ماه": 40,
+    "⭐ 50 گیگ + 2 ماه": 50,
+    "⭐ 100 گیگ + 4 ماه": 70
+
+}
+
+
 
 package_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -105,10 +123,6 @@ package_menu = ReplyKeyboardMarkup(
 )
 
 
-
-# =====================
-# دکمه رسید
-# =====================
 
 receipt_buttons = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -135,11 +149,9 @@ async def start(message: Message):
 
     args = message.text.split()
 
-
     if len(args) > 1:
 
         try:
-
             referrer_id = int(args[1])
 
             if referrer_id != user_id:
@@ -147,7 +159,6 @@ async def start(message: Message):
 
         except:
             pass
-
 
 
     await message.answer(
@@ -173,7 +184,7 @@ async def back(message: Message):
 
 
 # =====================
-# دکمه های کاربر
+# پنل کاربر
 # =====================
 
 @dp.message()
@@ -186,24 +197,60 @@ async def user_buttons(message: Message):
     if message.text == "🛒 خرید کانفینگ":
 
         await message.answer(
-            "🛒 لیست قیمت های کانفینگ ⭐️\n\n"
-            "یک پکیج را انتخاب کنید:",
+            "🛒 لیست قیمت کانفینگ ⭐️\n\n"
+            "پکیج را انتخاب کنید:",
             reply_markup=package_menu
         )
 
 
 
+    elif message.text == "⭐ خرید با امتیاز":
+
+        await message.answer(
+            "⭐ یک پکیج برای خرید با امتیاز انتخاب کنید:",
+            reply_markup=package_menu
+        )
+
+
+
+    elif message.text in points_packages:
+
+        need = points_packages[message.text]
+
+        points = get_points(user_id)
+
+
+        if points >= need:
+
+            remove_points(user_id, need)
+
+
+            await message.answer(
+                "✅ خرید با امتیاز انجام شد.\n\n"
+                f"📦 {message.text}\n"
+                f"⭐ {need} امتیاز کم شد.",
+                reply_markup=back_menu
+            )
+
+        else:
+
+            await message.answer(
+                f"❌ امتیاز کافی نیست.\n"
+                f"امتیاز لازم: {need}\n"
+                f"امتیاز شما: {points}",
+                reply_markup=back_menu
+            )
+
+
+
     elif message.text in packages:
-
-        price = packages[message.text]
-
 
         await message.answer(
             f"✅ پکیج انتخابی:\n\n"
             f"{message.text}\n"
-            f"💰 قیمت: {price}\n\n"
+            f"💰 قیمت: {packages[message.text]}\n\n"
             f"💳 شماره کارت:\n{CARD_NUMBER}\n\n"
-            "بعد از پرداخت عکس رسید را ارسال کنید.",
+            "رسید پرداخت را ارسال کنید.",
             reply_markup=back_menu
         )
 
@@ -218,7 +265,7 @@ async def user_buttons(message: Message):
 
         await message.answer(
             f"⭐ امتیاز شما: {points}\n\n"
-            f"👥 تعداد زیرمجموعه‌ها: {referrals}",
+            f"👥 زیرمجموعه‌ها: {referrals}",
             reply_markup=back_menu
         )
 
@@ -230,23 +277,11 @@ async def user_buttons(message: Message):
 
         link = f"https://t.me/{me.username}?start={user_id}"
 
-        referrals = get_referrals(user_id)
-
 
         await message.answer(
-            f"👥 لینک زیرمجموعه شما:\n\n"
+            f"👥 لینک شما:\n\n"
             f"{link}\n\n"
-            f"👤 تعداد دعوت‌ها: {referrals}\n"
-            f"🎁 هر نفر = 5 امتیاز",
-            reply_markup=back_menu
-        )
-
-
-
-    elif message.text == "⭐ خرید با امتیاز":
-
-        await message.answer(
-            "⭐ خرید با امتیاز بزودی فعال می‌شود.",
+            "🎁 هر زیرمجموعه = ۵ امتیاز",
             reply_markup=back_menu
         )
 
@@ -257,8 +292,41 @@ async def user_buttons(message: Message):
         await message.answer(
             "🎁 کد هدیه را ارسال کنید.",
             reply_markup=back_menu
-)
-            elif message.text == "📦 کانفینگ های خریداری شده من":
+    )
+    # =====================
+    # دریافت کد هدیه
+    # =====================
+
+    elif message.text and message.text.startswith("GIFT-"):
+
+        gift = get_gift(message.text)
+
+
+        if gift:
+
+            points = gift[0]
+
+            add_points(user_id, points)
+
+            use_gift(message.text)
+
+
+            await message.answer(
+                f"🎁 کد هدیه قبول شد.\n\n"
+                f"⭐ {points} امتیاز به حساب شما اضافه شد.",
+                reply_markup=back_menu
+            )
+
+        else:
+
+            await message.answer(
+                "❌ کد هدیه اشتباه است یا قبلاً استفاده شده.",
+                reply_markup=back_menu
+            )
+
+
+
+    elif message.text == "📦 کانفینگ های خریداری شده من":
 
         await message.answer(
             "📦 هنوز کانفینگی خریداری نکرده‌اید.",
@@ -286,7 +354,9 @@ async def user_buttons(message: Message):
 
 
 
-    # دریافت رسید
+    # =====================
+    # ارسال رسید
+    # =====================
 
     elif message.photo:
 
@@ -302,7 +372,7 @@ async def user_buttons(message: Message):
 
 
         await message.answer(
-            "✅ رسید شما برای پشتیبانی ارسال شد."
+            "✅ رسید ارسال شد."
         )
 
 
