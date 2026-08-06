@@ -11,7 +11,7 @@ from aiogram.types import (
 )
 from aiogram.filters import Command
 
-from db import get_points, get_referrals
+from db import get_points, get_referrals, set_referrer
 
 
 # =====================
@@ -32,7 +32,7 @@ dp = Dispatcher()
 
 
 # =====================
-# منوی اصلی
+# منوی اصلی کاربر
 # =====================
 
 user_menu = ReplyKeyboardMarkup(
@@ -60,7 +60,7 @@ user_menu = ReplyKeyboardMarkup(
 
 
 # =====================
-# دکمه برگشت
+# منوی برگشت
 # =====================
 
 back_menu = ReplyKeyboardMarkup(
@@ -75,23 +75,17 @@ back_menu = ReplyKeyboardMarkup(
 
 
 # =====================
-# قیمت ها
+# پکیج ها
 # =====================
 
 packages = {
 
     "⭐ 10 گیگ + 1 ماه": "150 تومان",
-
     "⭐ 15 گیگ + 1 ماه": "225 تومان",
-
     "⭐ 20 گیگ + 1 ماه": "300 تومان",
-
     "⭐ 30 گیگ + 1 ماه": "375 تومان",
-
     "⭐ 40 گیگ + 2 ماه": "465 تومان",
-
     "⭐ 50 گیگ + 2 ماه": "555 تومان",
-
     "⭐ 100 گیگ + 4 ماه": "700 تومان"
 
 }
@@ -113,7 +107,7 @@ package_menu = ReplyKeyboardMarkup(
 
 
 # =====================
-# تایید رسید
+# دکمه رسید
 # =====================
 
 receipt_buttons = InlineKeyboardMarkup(
@@ -131,11 +125,30 @@ receipt_buttons = InlineKeyboardMarkup(
     ]
 )
 # =====================
-# شروع
+# شروع با رفرال
 # =====================
 
 @dp.message(Command("start"))
 async def start(message: Message):
+
+    user_id = message.from_user.id
+
+    args = message.text.split()
+
+
+    if len(args) > 1:
+
+        try:
+
+            referrer_id = int(args[1])
+
+            if referrer_id != user_id:
+                set_referrer(user_id, referrer_id)
+
+        except:
+            pass
+
+
 
     await message.answer(
         "سلام 👋\n"
@@ -160,7 +173,7 @@ async def back(message: Message):
 
 
 # =====================
-# پنل کاربر
+# دکمه های کاربر
 # =====================
 
 @dp.message()
@@ -184,6 +197,7 @@ async def user_buttons(message: Message):
 
         price = packages[message.text]
 
+
         await message.answer(
             f"✅ پکیج انتخابی:\n\n"
             f"{message.text}\n"
@@ -198,7 +212,9 @@ async def user_buttons(message: Message):
     elif message.text == "⭐ امتیاز های من":
 
         points = get_points(user_id)
+
         referrals = get_referrals(user_id)
+
 
         await message.answer(
             f"⭐ امتیاز شما: {points}\n\n"
@@ -216,11 +232,12 @@ async def user_buttons(message: Message):
 
         referrals = get_referrals(user_id)
 
+
         await message.answer(
             f"👥 لینک زیرمجموعه شما:\n\n"
             f"{link}\n\n"
             f"👤 تعداد دعوت‌ها: {referrals}\n"
-            f"🎁 پاداش هر نفر: 5 امتیاز",
+            f"🎁 هر نفر = 5 امتیاز",
             reply_markup=back_menu
         )
 
@@ -229,7 +246,7 @@ async def user_buttons(message: Message):
     elif message.text == "⭐ خرید با امتیاز":
 
         await message.answer(
-            "⭐ خرید با امتیاز به زودی فعال می‌شود.",
+            "⭐ خرید با امتیاز بزودی فعال می‌شود.",
             reply_markup=back_menu
         )
 
@@ -240,14 +257,11 @@ async def user_buttons(message: Message):
         await message.answer(
             "🎁 کد هدیه را ارسال کنید.",
             reply_markup=back_menu
-        )
-
-
-
-    elif message.text == "📦 کانفینگ های خریداری شده من":
+)
+            elif message.text == "📦 کانفینگ های خریداری شده من":
 
         await message.answer(
-            "📦 هنوز کانفینگی ثبت نشده است.",
+            "📦 هنوز کانفینگی خریداری نکرده‌اید.",
             reply_markup=back_menu
         )
 
@@ -272,6 +286,8 @@ async def user_buttons(message: Message):
 
 
 
+    # دریافت رسید
+
     elif message.photo:
 
         await bot.send_photo(
@@ -286,8 +302,11 @@ async def user_buttons(message: Message):
 
 
         await message.answer(
-            "✅ رسید شما ارسال شد."
-)
+            "✅ رسید شما برای پشتیبانی ارسال شد."
+        )
+
+
+
 # =====================
 # تایید رسید
 # =====================
@@ -299,13 +318,14 @@ async def accept_receipt(call: CallbackQuery):
         call.message.caption.split(":")[-1].strip()
     )
 
+
     await bot.send_message(
         user_id,
-        "✅ پرداخت شما توسط پشتیبانی تایید شد.\n\n"
-        "لطفاً منتظر ارسال کانفینگ باشید."
+        "✅ پرداخت شما توسط پشتیبانی تایید شد."
     )
 
-    await call.answer("رسید تایید شد")
+
+    await call.answer("تایید شد")
 
 
 
@@ -320,17 +340,19 @@ async def reject_receipt(call: CallbackQuery):
         call.message.caption.split(":")[-1].strip()
     )
 
+
     await bot.send_message(
         user_id,
         "❌ رسید شما توسط پشتیبانی رد شد."
     )
 
-    await call.answer("رسید رد شد")
+
+    await call.answer("رد شد")
 
 
 
 # =====================
-# اجرای ربات
+# اجرا
 # =====================
 
 async def main():
@@ -342,4 +364,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())        
+    asyncio.run(main())
