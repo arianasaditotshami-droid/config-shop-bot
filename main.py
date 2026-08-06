@@ -1,31 +1,36 @@
 import asyncio
 
-from aiogram import Bot, Dispatcher
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import (
+    Message,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    CallbackQuery
+)
 from aiogram.filters import Command
 
-from db import (
-    create_tables,
-    add_user,
-    get_points,
-    get_configs
-)
 
-from admin import router as admin_router
-
+# =====================
+# تنظیمات ربات
+# =====================
 
 BOT_TOKEN = "8952198918:AAGuTIHUt49LzI97goCQf7Mesa0bBdOCWQM"
 
 ADMIN_ID = 8635403087
 
 CARD_NUMBER = "6104337300101910"
-
+"
 
 
 bot = Bot(token=BOT_TOKEN)
+
 dp = Dispatcher()
 
-dp.include_router(admin_router)
+
+# ذخیره موقت رسیدها
+receipts = {}
 
 
 
@@ -56,13 +61,24 @@ user_menu = ReplyKeyboardMarkup(
 
 
 
+# دکمه های رسید برای ادمین
+
+receipt_buttons = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="✅ تایید رسید",
+                callback_data="accept_receipt"
+            ),
+            InlineKeyboardButton(
+                text="❌ رد رسید",
+                callback_data="reject_receipt"
+            )
+        ]
+    ]
+)
 @dp.message(Command("start"))
 async def start(message: Message):
-
-    add_user(
-        message.from_user.id,
-        message.from_user.username
-    )
 
     await message.answer(
         "سلام 👋\n"
@@ -73,11 +89,12 @@ async def start(message: Message):
 
 
 @dp.message()
-async def buttons(message: Message):
+async def user_buttons(message: Message):
 
     user_id = message.from_user.id
 
 
+    # خرید کانفینگ
     if message.text == "🛒 خرید کانفینگ":
 
         await message.answer(
@@ -88,33 +105,23 @@ async def buttons(message: Message):
         )
 
 
+    # کد هدیه
     elif message.text == "🎁 وارد کردن کد هدیه":
 
         await message.answer(
-            "🎁 کد هدیه را ارسال کنید."
+            "🎁 کد هدیه خود را ارسال کنید."
         )
 
 
+    # کانفینگ های خریداری شده
     elif message.text == "📦 کانفینگ های خریداری شده من":
 
-        configs = get_configs(user_id)
-
-        if configs:
-
-            text = "📦 کانفینگ های شما:\n\n"
-
-            for c in configs:
-                text += f"• {c[0]}\n"
-
-            await message.answer(text)
-
-        else:
-
-            await message.answer(
-                "❌ هنوز کانفینگی خریداری نکرده‌اید."
-            )
+        await message.answer(
+            "📦 هنوز کانفینگی خریداری نکرده‌اید."
+        )
 
 
+    # شارژ حساب
     elif message.text == "💳 شارژ حساب":
 
         await message.answer(
@@ -124,15 +131,15 @@ async def buttons(message: Message):
         )
 
 
+    # امتیاز
     elif message.text == "⭐ امتیاز های من":
 
-        points = get_points(user_id)
-
         await message.answer(
-            f"⭐ امتیاز شما: {points}"
+            "⭐ امتیاز شما: 0"
         )
 
 
+    # زیرمجموعه
     elif message.text == "👥 زیر مجموعه گیری":
 
         info = await bot.get_me()
@@ -145,33 +152,91 @@ async def buttons(message: Message):
         )
 
 
+    # پشتیبانی
     elif message.text == "🛠 پشتیبانی":
 
         await message.answer(
-            "🛠 پیام خود را ارسال کنید."
+            "🛠 پیام خود را برای پشتیبانی ارسال کنید."
         )
 
 
+    # دریافت رسید عکس
     elif message.photo:
+
+        receipts[user_id] = True
 
         await bot.send_photo(
             ADMIN_ID,
             message.photo[-1].file_id,
             caption=(
                 "🧾 رسید پرداخت جدید\n\n"
-                f"👤 آیدی کاربر: {user_id}"
-            )
+                f"👤 آیدی کاربر:\n{user_id}"
+            ),
+            reply_markup=receipt_buttons
         )
 
+
         await message.answer(
-            "✅ رسید شما برای مدیریت ارسال شد."
+            "✅ رسید شما ارسال شد.\n"
+            "منتظر تایید پشتیبانی باشید."
         )
+
+
+
+# =====================
+# تایید رسید
+# =====================
+
+@dp.callback_query(F.data == "accept_receipt")
+async def accept_receipt(call: CallbackQuery):
+
+    text = call.message.caption
+
+    user_id = int(
+        text.split(":")[-1].strip()
+    )
+
+
+    await bot.send_message(
+        user_id,
+        "✅ پرداخت شما توسط پشتیبانی تایید شد.\n\n"
+        "لطفاً منتظر ارسال کانفینگ باشید."
+    )
+
+
+    await call.answer(
+        "رسید تایید شد"
+    )
+
+
+
+# =====================
+# رد رسید
+# =====================
+
+@dp.callback_query(F.data == "reject_receipt")
+async def reject_receipt(call: CallbackQuery):
+
+    text = call.message.caption
+
+    user_id = int(
+        text.split(":")[-1].strip()
+    )
+
+
+    await bot.send_message(
+        user_id,
+        "❌ رسید شما توسط پشتیبانی رد شد."
+    )
+
+
+    await call.answer(
+        "رسید رد شد"
+    )
 
 
 
 async def main():
-
-    create_tables()
 
     print("Bot Started")
 
