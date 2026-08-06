@@ -246,10 +246,8 @@ async def user_buttons(message: Message):
             f"⭐ امتیاز شما: {points}\n\n"
             f"👥 زیرمجموعه‌ها: {referrals}",
             reply_markup=back_menu
-        )
-
-
-    elif message.text == "👥 زیر مجموعه گیری":
+)
+            elif message.text == "👥 زیر مجموعه گیری":
 
         me = await bot.get_me()
 
@@ -294,8 +292,10 @@ async def user_buttons(message: Message):
             await message.answer(
                 "❌ کد هدیه اشتباه است.",
                 reply_markup=back_menu
-)
-                elif message.text == "📦 کانفینگ های خریداری شده من":
+            )
+
+
+    elif message.text == "📦 کانفینگ های خریداری شده من":
 
         await message.answer(
             "📦 هنوز کانفینگی خریداری نکرده‌اید.",
@@ -320,10 +320,6 @@ async def user_buttons(message: Message):
         )
 
 
-    # =====================
-    # ارسال رسید
-    # =====================
-
     elif message.photo:
 
         await bot.send_photo(
@@ -342,11 +338,6 @@ async def user_buttons(message: Message):
         )
 
 
-
-# =====================
-# تایید رسید
-# =====================
-
 @dp.callback_query(F.data == "accept_receipt")
 async def accept_receipt(call: CallbackQuery):
 
@@ -354,20 +345,13 @@ async def accept_receipt(call: CallbackQuery):
         call.message.caption.split(":")[-1].strip()
     )
 
-
     await bot.send_message(
         user_id,
         "✅ پرداخت شما تایید شد."
     )
 
-
     await call.answer("تایید شد")
 
-
-
-# =====================
-# رد رسید
-# =====================
 
 @dp.callback_query(F.data == "reject_receipt")
 async def reject_receipt(call: CallbackQuery):
@@ -376,27 +360,19 @@ async def reject_receipt(call: CallbackQuery):
         call.message.caption.split(":")[-1].strip()
     )
 
-
     await bot.send_message(
         user_id,
         "❌ رسید شما رد شد."
     )
 
-
     await call.answer("رد شد")
 
-
-
-# =====================
-# اجرا
-# =====================
 
 async def main():
 
     print("Bot Started")
 
     await dp.start_polling(bot)
-
 
 
 if __name__ == "__main__":
