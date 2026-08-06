@@ -244,3 +244,42 @@ def get_configs(user_id):
     db.close()
 
     return result
+
+# =====================
+# سیستم زیرمجموعه و امتیاز
+# =====================
+
+def add_referral(user_id):
+    db = connect()
+    cur = db.cursor()
+
+    cur.execute(
+        """
+        UPDATE users 
+        SET referrals = referrals + 1,
+            points = points + 5
+        WHERE user_id=?
+        """,
+        (user_id,)
+    )
+
+    db.commit()
+    db.close()
+
+
+
+def get_referrals(user_id):
+
+    db = connect()
+    cur = db.cursor()
+
+    cur.execute(
+        "SELECT referrals FROM users WHERE user_id=?",
+        (user_id,)
+    )
+
+    result = cur.fetchone()
+
+    db.close()
+
+    return result[0] if result else 0
