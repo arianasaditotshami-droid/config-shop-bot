@@ -283,3 +283,32 @@ def get_referrals(user_id):
     db.close()
 
     return result[0] if result else 0
+def set_referrer(user_id, referrer_id):
+    db = connect()
+    cur = db.cursor()
+
+    cur.execute(
+        "SELECT referrer FROM users WHERE user_id=?",
+        (user_id,)
+    )
+
+    user = cur.fetchone()
+
+    if user and (user[0] is None or user[0] == 0):
+        cur.execute(
+            "UPDATE users SET referrer=? WHERE user_id=?",
+            (referrer_id, user_id)
+        )
+
+        cur.execute(
+            """
+            UPDATE users
+            SET points = points + 5,
+                referrals = referrals + 1
+            WHERE user_id=?
+            """,
+            (referrer_id,)
+        )
+
+    db.commit()
+    db.close()
