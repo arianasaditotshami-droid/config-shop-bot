@@ -242,13 +242,14 @@ async def user_buttons(message: Message):
 
         referrals = get_referrals(user_id)
 
-        await message.answer(
+                await message.answer(
             f"⭐ امتیاز شما: {points}\n\n"
             f"👥 زیرمجموعه‌ها: {referrals}",
             reply_markup=back_menu
-)
-            elif message.text == "👥 زیر مجموعه گیری":
+        )
 
+
+    elif message.text == "👥 زیر مجموعه گیری":
         me = await bot.get_me()
 
         link = f"https://t.me/{me.username}?start={user_id}"
