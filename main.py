@@ -4,6 +4,18 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
+from db import (
+    create_tables,
+    add_user,
+    get_points,
+    get_configs
+)
+
+
+# =====================
+# تنظیمات ربات
+# =====================
+
 BOT_TOKEN = "8952198918:AAGuTIHUt49LzI97goCQf7Mesa0bBdOCWQM"
 
 ADMIN_ID = 8635403087
@@ -11,10 +23,14 @@ ADMIN_ID = 8635403087
 CARD_NUMBER = "6104337300101910"
 
 
-
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
+
+
+# =====================
+# منوی کاربر
+# =====================
 
 user_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -38,53 +54,81 @@ user_menu = ReplyKeyboardMarkup(
 )
 
 
+
 @dp.message(Command("start"))
 async def start(message: Message):
 
+    add_user(
+        message.from_user.id,
+        message.from_user.username
+    )
+
     await message.answer(
-        "سلام 👋\nبه ربات فروش کانفینگ خوش آمدید.",
+        "سلام 👋\n"
+        "به ربات فروش کانفینگ خوش آمدید.",
         reply_markup=user_menu
     )
 
 
+
 @dp.message()
-async def menu(message: Message):
+async def buttons(message: Message):
 
     user_id = message.from_user.id
 
 
     if message.text == "🛒 خرید کانفینگ":
+
         await message.answer(
-            f"🛒 خرید کانفینگ\n\n"
+            "🛒 خرید کانفینگ\n\n"
+            "حجم مورد نظر خود را ارسال کنید.\n\n"
             f"💳 شماره کارت:\n{CARD_NUMBER}\n\n"
-            "بعد از پرداخت رسید را ارسال کنید."
+            "بعد از پرداخت عکس رسید را ارسال کنید."
         )
 
 
     elif message.text == "🎁 وارد کردن کد هدیه":
+
         await message.answer(
-            "🎁 کد هدیه خود را ارسال کنید."
+            "🎁 کد هدیه را ارسال کنید."
         )
 
 
     elif message.text == "📦 کانفینگ های خریداری شده من":
-        await message.answer(
-            "📦 لیست کانفینگ های شما:\n"
-            "هنوز سفارشی ندارید."
-        )
+
+        configs = get_configs(user_id)
+
+        if configs:
+
+            text = "📦 کانفینگ های شما:\n\n"
+
+            for c in configs:
+                text += f"• {c[0]}\n"
+
+            await message.answer(text)
+
+        else:
+
+            await message.answer(
+                "❌ هنوز کانفینگی خریداری نکرده‌اید."
+            )
 
 
     elif message.text == "💳 شارژ حساب":
+
         await message.answer(
-            f"💳 شارژ حساب\n\n"
-            f"واریز به کارت:\n{CARD_NUMBER}\n\n"
-            "رسید را ارسال کنید."
+            "💳 شارژ حساب\n\n"
+            f"شماره کارت:\n{CARD_NUMBER}\n\n"
+            "رسید پرداخت را ارسال کنید."
         )
 
 
     elif message.text == "⭐ امتیاز های من":
+
+        points = get_points(user_id)
+
         await message.answer(
-            "⭐ امتیاز شما: 0"
+            f"⭐ امتیاز شما: {points}"
         )
 
 
@@ -95,21 +139,43 @@ async def menu(message: Message):
         link = f"https://t.me/{info.username}?start={user_id}"
 
         await message.answer(
-            f"👥 لینک دعوت شما:\n\n{link}\n\n"
-            "با دعوت دوستان امتیاز بگیرید."
+            "👥 لینک زیرمجموعه گیری شما:\n\n"
+            f"{link}"
         )
 
 
     elif message.text == "🛠 پشتیبانی":
+
         await message.answer(
-            "🛠 پیام خود را برای پشتیبانی ارسال کنید."
+            "🛠 پیام خود را ارسال کنید."
         )
+
+
+    elif message.photo:
+
+        await bot.send_photo(
+            ADMIN_ID,
+            message.photo[-1].file_id,
+            caption=(
+                "🧾 رسید پرداخت جدید\n\n"
+                f"👤 آیدی کاربر: {user_id}"
+            )
+        )
+
+        await message.answer(
+            "✅ رسید شما برای مدیریت ارسال شد."
+        )
+
 
 
 async def main():
 
+    create_tables()
+
     print("Bot Started")
+
     await dp.start_polling(bot)
+
 
 
 if __name__ == "__main__":
