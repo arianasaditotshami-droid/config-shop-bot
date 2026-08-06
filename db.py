@@ -11,7 +11,6 @@ def create_tables():
     db = connect()
     cur = db.cursor()
 
-    # کاربران
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         user_id INTEGER PRIMARY KEY,
@@ -23,7 +22,6 @@ def create_tables():
     )
     """)
 
-    # سفارش‌ها
     cur.execute("""
     CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +32,6 @@ def create_tables():
     )
     """)
 
-    # کدهای هدیه
     cur.execute("""
     CREATE TABLE IF NOT EXISTS gifts (
         code TEXT PRIMARY KEY,
@@ -73,7 +70,9 @@ def get_points(user_id):
     db.close()
 
     return result[0] if result else 0
-    def add_points(user_id, amount):
+
+
+def add_points(user_id, amount):
     db = connect()
     cur = db.cursor()
 
@@ -109,7 +108,6 @@ def get_referrals(user_id):
     )
 
     result = cur.fetchone()
-
     db.close()
 
     return result[0] if result else 0
@@ -145,7 +143,9 @@ def set_referrer(user_id, referrer_id):
 
     db.commit()
     db.close()
-    def get_gift(code):
+
+
+def get_gift(code):
     db = connect()
     cur = db.cursor()
 
